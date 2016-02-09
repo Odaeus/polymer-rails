@@ -1,10 +1,8 @@
 module Polymer
   module Rails
     class Railtie < ::Rails::Railtie
-      initializer :polymer_html_import do
-        helpers = %q{ include AssetTagHelper }
-        ::ActionView::Base.module_eval(helpers)
-        ::Rails.application.assets.context_class.class_eval(helpers)
+      initializer :polymer_html_import do |app|
+        ::ActionView::Base.module_eval("include AssetTagHelper")
       end
 
       initializer :precompile_polymer do |app|
@@ -13,24 +11,13 @@ module Polymer
         end
       end
 
-      initializer :add_preprocessors do |app|
-        add_preprocessors(app)
-      end
+      config.after_initialize do |app|
+        app.config.assets.context_class.class_eval("include Polymer::Rails::AssetTagHelper")
 
-      private
-
-      def add_preprocessors(app)
         app.assets.register_preprocessor 'text/html', Polymer::Rails::Processors::Directive
-        if Polymer::Rails::LEGACY_SPROCKETS
-          app.assets.register_mime_type "text/html", '.html'
-          app.assets.register_postprocessor 'text/html', :web do |context, data|
-            Polymer::Rails::Processors::Component.new(context, data).process
-          end
-        else
-          app.assets.register_mime_type 'text/html', extensions: ['.html']
-          app.assets.register_bundle_processor 'text/html', ::Sprockets::Bundle
-          app.assets.register_postprocessor 'text/html', Polymer::Rails::Processors::Component
-        end
+        app.assets.register_mime_type 'text/html', extensions: ['.html']
+        app.assets.register_bundle_processor 'text/html', ::Sprockets::Bundle
+        app.assets.register_postprocessor 'text/html', Polymer::Rails::Processors::Component
       end
     end
   end
