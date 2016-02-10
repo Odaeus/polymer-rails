@@ -11,13 +11,15 @@ module Polymer
         end
       end
 
-      config.after_initialize do |app|
-        app.config.assets.context_class.class_eval("include Polymer::Rails::AssetTagHelper")
+      initializer "polymer.sprockets" do |app|
+        app.config.assets.configure do |env|
+          env.context_class.class_eval("include Polymer::Rails::AssetTagHelper")
 
-        app.assets.register_preprocessor 'text/html', Polymer::Rails::Processors::Directive
-        app.assets.register_mime_type 'text/html', extensions: ['.html']
-        app.assets.register_bundle_processor 'text/html', ::Sprockets::Bundle
-        app.assets.register_postprocessor 'text/html', Polymer::Rails::Processors::Component
+          env.register_preprocessor 'text/html', Polymer::Rails::Processors::Directive
+          env.register_mime_type 'text/html', extensions: ['.html']
+          env.register_bundle_processor 'text/html', ::Sprockets::Bundle
+          env.register_postprocessor 'text/html', Polymer::Rails::Processors::Component
+        end
       end
     end
   end
